@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>脑电电极 × 大脑脑区 3D 可视化 | 10-20 系统</title>
+  <meta name="description" content="基于 Three.js 的交互式 3D 可视化：展示 EEG 10-20 国际系统的头皮电极与大脑五大脑叶的对应关系。WorkBuddy 1024 造物挑战参赛作品。" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%A0%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./css/style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">🧠</span>
+        <div>
+          <h1>脑电电极 × 大脑脑区 3D 可视化</h1>
+          <p>EEG Electrode &amp; Brain Region Correspondence · 基于 10-20 国际系统</p>
+        </div>
+      </div>
+      <span class="badge">WorkBuddy · 1024 造物挑战</span>
+    </header>
+
+    <main class="stage">
+      <div class="viewer">
+        <div id="canvas-wrap">
+          <div id="labels"></div>
+          <div id="loading">正在加载 3D 场景与脑图谱数据…</div>
+          <div id="hud-error" hidden></div>
+        </div>
+        <div class="controls" id="controls">
+          <button data-toggle="sensors" class="active">电极</button>
+          <button data-toggle="labels" class="active">标签</button>
+          <button data-toggle="brain" class="active">脑模型</button>
+          <button data-action="rotate">自动旋转</button>
+          <button data-action="reset">重置视角</button>
+        </div>
+        <div class="hint">拖拽旋转 · 滚轮缩放 · 点击电极 / 脑区查看对应脑区</div>
+      </div>
+
+      <aside class="sidebar">
+        <section class="panel">
+          <h2>信息面板</h2>
+          <div id="info">点击任意电极（传感器），或下方脑区图例 / 直接点击大脑表面，查看其对应的脑区与功能。</div>
+        </section>
+        <section class="panel">
+          <h2>脑区图例（点击高亮）</h2>
+          <div id="legend"></div>
+        </section>
+      </aside>
+    </main>
+
+    <section class="content">
+      <div class="card">
+        <h2>关于本作品</h2>
+        <p>这是一件面向科普与教学的 3D 交互作品：把脑电图（EEG）常用的 <b>10-20 国际电极放置系统</b> 的头皮电极（传感器），叠加在一张由真实脑图谱构建的皮层网格上，按 96 个脑区 / 11 类着色，直观呈现「哪个电极记录的是哪一块脑区的电活动」。所有渲染均在浏览器本地完成，无需服务器，可一键部署到 GitHub Pages。</p>
+        <p>交互提示：拖动旋转视角，滚轮缩放；点击某个电极会高亮其所属脑区分类并在左侧显示功能说明；点击右侧图例可整体高亮某一脑区；直接点击大脑表面还能定位到具体的脑区结构。</p>
+      </div>
+
+      <div class="card">
+        <h2>什么是脑电图（EEG）？</h2>
+        <p>脑电图通过在头皮上放置若干金属电极，记录大脑皮层神经元群体突触活动产生的微弱电位（微伏级）。由于颅骨与脑膜会衰减、模糊信号，头皮电极记录到的是其下方较大范围脑区的「平均」电活动——因此电极位置与脑区的对应关系是 EEG 解读的基础。</p>
+        <h3>10-20 国际系统命名规则</h3>
+        <ul>
+          <li><b>字母</b>表示脑区/纬度：<span class="kbd">F</span> 额叶(Frontal)、<span class="kbd">C</span> 中央区(Central)、<span class="kbd">T</span> 颞叶(Temporal)、<span class="kbd">P</span> 顶叶(Parietal)、<span class="kbd">O</span> 枕叶(Occipital)、<span class="kbd">Fp</span> 额极。</li>
+          <li><b>奇数 / 偶数</b>表示左右：奇数在患者左侧，偶数在右侧。</li>
+          <li><b>z</b> 表示中线（zero，左右正中）。</li>
+          <li>数字越大表示越偏离中线（如 F3 比 Fz 更靠左）。</li>
+        </ul>
+        <p>本作品中电极坐标为该系统的<b>示意性近似</b>，用于教学演示，非临床定位精度。</p>
+      </div>
+
+      <div class="card">
+        <h2>脑区分类与功能</h2>
+        <div class="grid-lobes" id="lobes-grid"></div>
+      </div>
+
+      <div class="card">
+        <h2>电极 — 脑区对照表</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>电极</th><th>中文位置</th><th>脑区</th><th>说明</th></tr>
+            </thead>
+            <tbody id="electrode-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <span>🧠 脑电电极 × 大脑脑区 3D 可视化</span>
+      <span class="sep">·</span>
+      <span>Three.js 驱动的纯静态站点</span>
+      <span class="sep">·</span>
+      <span>WorkBuddy 1024 造物挑战参赛作品</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
